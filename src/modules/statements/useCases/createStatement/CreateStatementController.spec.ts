@@ -7,6 +7,7 @@ import createConnection from "../../../../database/index";
 import { app } from "../../../../app";
 
 let connection: Connection;
+let token: string;
 
 describe("Create Statement Controller", () => {
   beforeAll(async () => {
@@ -21,6 +22,14 @@ describe("Create Statement Controller", () => {
         VALUES('${id}', 'admin', 'admin@finapi.com.br', '${password}', 'now()')
       `
     );
+
+    const responseToken = await request(app).post("/api/v1/sessions")
+      .send({
+        email: "admin@finapi.com.br",
+        password: "admin"
+      })
+
+    token = responseToken.body.token;
   })
 
   afterAll(async () => {
@@ -29,14 +38,6 @@ describe("Create Statement Controller", () => {
   })
 
   it("should be able to deposit an amount", async () => {
-    const responseToken = await request(app).post("/api/v1/sessions")
-      .send({
-        email: "admin@finapi.com.br",
-        password: "admin"
-      })
-
-    const { token } = responseToken.body;
-
     const response = await request(app).post("/api/v1/statements/deposit").send({
       amount: 200.00,
       description: "Statement Supertest"
@@ -48,14 +49,6 @@ describe("Create Statement Controller", () => {
   })
 
   it("should be able to withdraw an amount", async () => {
-    const responseToken = await request(app).post("/api/v1/sessions")
-      .send({
-        email: "admin@finapi.com.br",
-        password: "admin"
-      })
-
-    const { token } = responseToken.body;
-
     await request(app).post("/api/v1/statements/deposit").send({
       amount: 200.00,
       description: "Statement Supertest"
@@ -74,14 +67,6 @@ describe("Create Statement Controller", () => {
   })
 
   it("should not be able to withdraw an amount higher than the user funds", async () => {
-    const responseToken = await request(app).post("/api/v1/sessions")
-      .send({
-        email: "admin@finapi.com.br",
-        password: "admin"
-      })
-
-    const { token } = responseToken.body;
-
     const response = await request(app).post("/api/v1/statements/withdraw").send({
       amount: 999.99,
       description: "Statement Supertest"
